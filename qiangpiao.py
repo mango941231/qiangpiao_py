@@ -35,7 +35,7 @@ def main():
             driver.switch_to.frame('ifrmSeat')
             for i in driver.find_elements(By.TAG_NAME, "iframe"):
                 print(i.get_attribute('outerHTML'))
-            driver.switch_to.frame(driver.find_elements(By.XPATH, "//*[@title='reCAPTCHA 验证将于 2 分钟后过期']")[0])
+            driver.switch_to.frame(driver.find_elements(By.XPATH, "//*[contains(@title, 'reCAPTCHA ')]")[0])
             # driver.find_element(By.CLASS_NAME, "recaptcha-checkbox-border").click()
             tag_name = driver.find_element(By.XPATH, "//*[@class='rc-imageselect-desc-wrapper']/div/strong").text
             print(tag_name)

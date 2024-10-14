@@ -3,7 +3,7 @@ import base64
 
 token  = "156543ab-4c71-4b59-a531-372581bd7739"
 
-img_dict = {
+img_dict_zh = {
   '出租车': '/m/0pg52',
   '巴士': '/m/01bjv',
   '公交车': '/m/01bjv',
@@ -24,6 +24,25 @@ img_dict = {
   '消防栓': '/m/01pns0',
   '楼梯': '/m/01lynh'
 }
+img_dict_en = {
+  'taxis': '/m/0pg52',
+  'bus': '/m/01bjv',
+  'school bus': '/m/02yvhj',
+  'motorcycles': '/m/04_sv',
+  'tractors': '/m/013xlm',
+  'chimneys': '/m/01jk_4',
+  'crosswalks': '/m/014xcs',
+  'traffic lights': '/m/015qff',
+  'bicycles': '/m/0199g',
+  'parking meters': '/m/015qbp',
+  'cars': '/m/0k4j',
+  'bridges': '/m/015kr',
+  'boats': '/m/019jd',
+  'palm trees': '/m/0cdl1',
+  'mountains or hills': '/m/09d_r',
+  'fire hydrant': '/m/01pns0',
+  'stairs': '/m/01lynh'
+}
 
 
 def get_location(imgUrl, img_tag):
@@ -31,13 +50,13 @@ def get_location(imgUrl, img_tag):
         'Content-Type': 'application/json',
         'Authorization': f'Bearer {token}',
     }
-    print(img_tag, img_dict[img_tag])
+    print(img_tag, img_dict_en[img_tag])
     encoded_string = base64.b64encode(requests.get(imgUrl).content).decode('utf-8')
     # print(encoded_string)
     json_data = {
         'captchaType': 'ReCaptchaV2Classification',
         'image': encoded_string,
-        'question': img_dict[img_tag],
+        'question': img_dict_en[img_tag],
     }
 
     response = requests.post('https://api.captcha.run/v2/tasks', headers=headers, json=json_data).json()
