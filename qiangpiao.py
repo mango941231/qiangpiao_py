@@ -35,16 +35,17 @@ def main():
             driver.switch_to.frame('ifrmSeat')
             for i in driver.find_elements(By.TAG_NAME, "iframe"):
                 print(i.get_attribute('outerHTML'))
-            driver.switch_to.frame(driver.find_elements(By.TAG_NAME, "iframe")[-1])
+            driver.switch_to.frame(driver.find_elements(By.XPATH, "//*[@title='reCAPTCHA 验证将于 2 分钟后过期']")[0])
+            # driver.find_element(By.CLASS_NAME, "recaptcha-checkbox-border").click()
             tag_name = driver.find_element(By.XPATH, "//*[@class='rc-imageselect-desc-wrapper']/div/strong").text
             print(tag_name)
-            img = driver.find_elements(By.XPATH, "//*[@class='rc-image-tile-wrapper']")
-            img_url = img[0].find_element(By.XPATH, ".//img").get_attribute('src')
-            print(img_url)
-            location = get_location(img_url, tag_name)
-            for l in location:
-                img[l].click()
-                # time.sleep(2)
+            # img = driver.find_elements(By.XPATH, "//*[@class='rc-image-tile-wrapper']")
+            # img_url = img[0].find_element(By.XPATH, ".//img").get_attribute('src')
+            # print(img_url)
+            # location = get_location(img_url, tag_name)
+            # for l in location:
+            #     img[l].click()
+            #     # time.sleep(2)
             time.sleep(999)
             # //*[@id="TmgsTable"]/tbody/tr/td/map[2]/area[1]
             # driver.switch_to.frame('ifrmSeat')
