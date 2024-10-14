@@ -100,7 +100,9 @@ class Interpark:
                 # for i in self.driver.find_elements(By.TAG_NAME, "iframe"):
                 #     print(i.get_attribute('outerHTML'))
                 self.driver.switch_to.frame(self.driver.find_elements(By.TAG_NAME, "iframe")[-1])
-                time.sleep(2)
+                # time.sleep(2)
+                self.wait.until(
+                    EC.visibility_of_element_located((By.XPATH, "//*[@class='rc-imageselect-desc-wrapper']/div/strong")))
                 tag_name = self.driver.find_element(By.XPATH, "//*[@class='rc-imageselect-desc-wrapper']/div/strong").text
                 img = self.driver.find_elements(By.XPATH, "//*[@class='rc-image-tile-wrapper']")
                 img_url = img[0].find_element(By.XPATH, ".//img").get_attribute('src')
