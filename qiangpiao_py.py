@@ -23,13 +23,34 @@ class Interpark:
             service=Service(r"chromedriver.exe"),
             options=options,
         )
-        self.wait = WebDriverWait(self.driver, 20)
+        self.wait = WebDriverWait(self.driver, 30)
+
+    def login(self):
+        self.driver.get('https://www.globalinterpark.com/en/login')
+        user = self.driver.find_element(By.XPATH, '//input[@type="email"]')
+        user.clear()
+        user.send_keys(config['INFO']['Account'])
+        time.sleep(2)
+        password = self.driver.find_element(By.XPATH, '//input[@type="password"]')
+        password.clear()
+        password.send_keys(config['INFO']['Password'])
+        time.sleep(2)
+        while 1:
+            try:
+                # self.wait.until(
+                #     EC.visibility_of_element_located((By.XPATH, '//div[contains(@class, "container__Container")]/button[@type="submit"]')))
+                self.driver.find_element(By.XPATH, '//div[contains(@class, "container__Container")]/button[@type="submit"]').click()
+                break
+            except Exception as e:
+                print(e)
+            time.sleep(5)
 
     def click_buy_tickets(self):
         """
         点击某个演唱会首页的“Buy Tickets"按钮
         :return:
         """
+        self.driver.get(config["INFO"]["Showurl"])
         self.driver.switch_to.frame('product_detail_area')
         self.driver.find_element(By.XPATH, "//*[@class='btn_Booking']/img").click()
 
@@ -239,6 +260,7 @@ class Interpark:
 
 
     def run(self):
+        # self.login()
         self.click_buy_tickets()
         self.switch_window()
         self.select_date()
