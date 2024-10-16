@@ -84,6 +84,7 @@ class Interpark:
         """
         count = 0
         while 1:
+            self.driver.switch_to.default_content()
             self.driver.switch_to.frame('ifrmBookStep')
             CellPlayDate = self.driver.find_elements(By.ID, "CellPlayDate")
             if len(CellPlayDate) > 0:
@@ -195,6 +196,10 @@ class Interpark:
             self.driver.switch_to.frame('ifrmSeat')
             self.driver.find_element(By.ID, "NextStepImage").click()
             time.sleep(1)
+            return True
+        else:
+            self.click_previous()
+            return False
 
     def select_ticket_num(self):
         """
@@ -258,19 +263,22 @@ class Interpark:
                 self.driver.find_element(By.ID, "credentialNo").send_keys(config['INFO']['Idcard'])
                 # self.driver.find_element(By.ID, "btnGetCode").click()
 
-
     def run(self):
         # self.login()
         self.click_buy_tickets()
         self.switch_window()
-        self.select_date()
-        self.pass_captcha()
-        self.choose_seat()
-        self.select_ticket_num()
-        self.insert_info()
-        self.choose_agree()
-        self.insert_payment_info()
-        pass
+        while 1:
+            self.select_date()
+            self.pass_captcha()
+            is_seat = self.choose_seat()
+            if is_seat:
+                self.select_ticket_num()
+                self.insert_info()
+                self.choose_agree()
+                self.insert_payment_info()
+                break
+            else:
+                time.sleep(2)
 
 
 def main():
