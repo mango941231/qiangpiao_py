@@ -50,13 +50,21 @@ def get_location(imgUrl, img_tag):
         'Content-Type': 'application/json',
         'Authorization': f'Bearer {token}',
     }
-    print(img_tag, img_dict_en[img_tag])
+    img_dict = {}
+    if img_dict_zh.get(img_tag):
+        print(img_tag, img_dict_zh[img_tag])
+        img_dict = img_dict_zh
+    elif img_dict_en.get(img_tag):
+        print(img_tag, img_dict_en[img_tag])
+        img_dict = img_dict_en
+    else:
+        return []
     encoded_string = base64.b64encode(requests.get(imgUrl).content).decode('utf-8')
     # print(encoded_string)
     json_data = {
         'captchaType': 'ReCaptchaV2Classification',
         'image': encoded_string,
-        'question': img_dict_en[img_tag],
+        'question': img_dict[img_tag],
     }
 
     response = requests.post('https://api.captcha.run/v2/tasks', headers=headers, json=json_data).json()

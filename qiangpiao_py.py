@@ -50,7 +50,7 @@ class Interpark:
         点击某个演唱会首页的“Buy Tickets"按钮
         :return:
         """
-        self.driver.get(config["INFO"]["Showurl"])
+        # self.driver.get(config["INFO"]["Showurl"])
         self.driver.switch_to.frame('product_detail_area')
         self.driver.find_element(By.XPATH, "//*[@class='btn_Booking']/img").click()
 
