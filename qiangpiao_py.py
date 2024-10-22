@@ -1,5 +1,8 @@
 import time
 import configparser
+import traceback
+import xml.etree.ElementTree as ET
+import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -24,6 +27,14 @@ class Interpark:
             options=options,
         )
         self.wait = WebDriverWait(self.driver, 30)
+        self.headers = {
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+            'cookie': '_fbp=fb.1.1727169446426.939794601515595092; _gid=GA1.2.130519258.1729505127; cbtUser=fYNXblFucq2Tql8dnMlEsk0xLMI9nBBzoB4cqdCn0T4=; memID=vzjJMG0qlzbtIGhOAgqrPd47g9zXC6qpJDYY2CA8rtU%3D; memNo=uSH4QBAtbokjB%2Bfqm60C%2BA%3D%3D; TMem%5FNO=T33825176; TMem%5FNO%5FG=T33825176; memEmail=vzjJMG0qlzbtIGhOAgqrPd47g9zXC6qpJDYY2CA8rtU%3D; _ga_BEN1B7STVY=GS1.1.1729576779.18.1.1729577529.0.0.0; _ga=GA1.2.262842975.1727169446; _gat_UA-60117844-2=1; _ga_3840G72Z4Q=GS1.1.1729576393.20.1.1729577654.0.0.0',
+            'accept-encoding': 'gzip, deflate, br, zstd',
+            'accept-language': 'zh-CN,zh;q=0.9',
+            'priority': 'u=1, i',
+            'referer': 'https://gpoticket.globalinterpark.com/Global/Play/Book/BookSeat.asp?GoodsCode=24011097&PlaceCode=24000609&OnlyDeliver=68001&DBDay=12&ExpressDelyDay=0&GroupName=INSPIRE+CONCERT+SERIES+%EF%BC%832+%3A+WESTLIFE&PlaceName=%EC%9D%B8%EC%8A%A4%ED%8C%8C%EC%9D%B4%EC%96%B4+%EC%95%84%EB%A0%88%EB%82%98&TmgsOrNot=D2003&LocOfImage=&Tiki=N&KindOfGoods=01003&GlobalSportsYN=N&isSeatCntView=N&LanguageType=G2001&MemBizCode=10965&BizCode=10965&PlayDate=20241123&PlaySeq=001&SessionId=24011097_M0000000640491729577604&BizMemberCode=T33825176&BizMemberFlag=&GoodsBizCode=53986&WynsCode=&WynsGateID=&PageCV=&kindOfChannels=,C5015,C5021,C5025,C5025,C5025,C5027,Q2033,Q2034,Q2363,&InterlockingGoods=',
+        }
 
     def login(self):
         self.driver.get('https://www.globalinterpark.com/en/login')
@@ -51,6 +62,7 @@ class Interpark:
         :return:
         """
         # self.driver.get(config["INFO"]["Showurl"])
+        self.driver.switch_to.default_content()
         self.driver.switch_to.frame('product_detail_area')
         self.driver.find_element(By.XPATH, "//*[@class='btn_Booking']/img").click()
 
@@ -106,34 +118,38 @@ class Interpark:
         :return:
         """
         while 1:
-            self.driver.switch_to.default_content()
-            self.driver.switch_to.frame('ifrmSeat')
-            captcha_info = self.driver.find_element(By.XPATH, "//*[@id='divRecaptcha_v2']").get_attribute('style')
-            if captcha_info.strip() != '':
-                break
-            else:
-                try:
-                    self.driver.switch_to.frame(self.driver.find_elements(By.XPATH, "//*[@title='reCAPTCHA']")[0])
-                    self.driver.find_element(By.CLASS_NAME, "recaptcha-checkbox-border").click()
-                except Exception:
-                    pass
+            try:
                 self.driver.switch_to.default_content()
                 self.driver.switch_to.frame('ifrmSeat')
-                # for i in self.driver.find_elements(By.TAG_NAME, "iframe"):
-                #     print(i.get_attribute('outerHTML'))
-                self.driver.switch_to.frame(self.driver.find_elements(By.TAG_NAME, "iframe")[-1])
-                # time.sleep(2)
-                self.wait.until(
-                    EC.visibility_of_element_located((By.XPATH, "//*[@class='rc-imageselect-desc-wrapper']/div/strong")))
-                tag_name = self.driver.find_element(By.XPATH, "//*[@class='rc-imageselect-desc-wrapper']/div/strong").text
-                img = self.driver.find_elements(By.XPATH, "//*[@class='rc-image-tile-wrapper']")
-                img_url = img[0].find_element(By.XPATH, ".//img").get_attribute('src')
-                print(img_url)
-                location = get_location(img_url, tag_name)
-                for l in location:
-                    img[l].click()
-                self.driver.find_element(By.ID, "recaptcha-verify-button").click()
-            time.sleep(2)
+                captcha_info = self.driver.find_element(By.XPATH, "//*[@id='divRecaptcha_v2']").get_attribute('style')
+                if captcha_info.strip() != '':
+                    break
+                else:
+                    try:
+                        self.driver.switch_to.frame(self.driver.find_elements(By.XPATH, "//*[@title='reCAPTCHA']")[0])
+                        self.driver.find_element(By.CLASS_NAME, "recaptcha-checkbox-border").click()
+                    except Exception:
+                        pass
+                    self.driver.switch_to.default_content()
+                    self.driver.switch_to.frame('ifrmSeat')
+                    # for i in self.driver.find_elements(By.TAG_NAME, "iframe"):
+                    #     print(i.get_attribute('outerHTML'))
+                    self.driver.switch_to.frame(self.driver.find_elements(By.TAG_NAME, "iframe")[-1])
+                    # time.sleep(2)
+                    self.wait.until(
+                        EC.visibility_of_element_located((By.XPATH, "//*[@class='rc-imageselect-desc-wrapper']/div/strong")))
+                    tag_name = self.driver.find_element(By.XPATH, "//*[@class='rc-imageselect-desc-wrapper']/div/strong").text
+                    img = self.driver.find_elements(By.XPATH, "//*[@class='rc-image-tile-wrapper']")
+                    img_url = img[0].find_element(By.XPATH, ".//img").get_attribute('src')
+                    print(img_url)
+                    location = get_location(img_url, tag_name)
+                    for l in location:
+                        img[l].click()
+                    self.driver.find_element(By.ID, "recaptcha-verify-button").click()
+                time.sleep(2)
+            except Exception as e:
+                print(traceback.format_exc())
+                return False
 
     def get_vacant_seat(self):
         """
@@ -172,7 +188,8 @@ class Interpark:
             else:
                 self.click_previous()
                 self.select_date()
-                self.pass_captcha()
+                if self.pass_captcha() == False:
+                    break
                 self.driver.switch_to.frame('ifrmSeatDetail')
         return vs
 
@@ -198,8 +215,38 @@ class Interpark:
             time.sleep(1)
             return True
         else:
-            self.click_previous()
+            # self.click_previous()
+            self.driver.close()
+            self.click_buy_tickets()
             return False
+
+    def choose_seat_api(self):
+        """
+        选座（通过接口）
+        :return:
+        """
+        pass
+
+    def get_area(self):
+        GoodsCode = '24011097'
+        PlaceCode = '24000609'
+        SessionId = '24011097_M0000000641721729592025'
+        url = f'https://gpoticket.globalinterpark.com/Global/Play/Book/Lib/BookInfoXml.asp?Flag=AllBlock&GoodsCode={GoodsCode}&PlaceCode={PlaceCode}&LanguageType=G2001&MemBizCode=10965&PlaySeq=001&Tiki=N&TmgsOrNot=D2003&SessionId={SessionId}'
+        resp = requests.get(url, headers=self.headers).text
+        # print(resp)
+        html = ET.fromstring(resp)
+        for i in html.findall('Table'):
+            area_no = i.find('SelfDefineBlock').text
+            SeatGrade = i.find('SeatGrade').text
+            print(area_no, SeatGrade)
+
+    def get_seat_detail(self):
+        GoodsCode = '24012940'
+        PlaceCode = '24001113'
+        SessionId = '24011097_M0000000641721729592025'
+        url = f'https://gpoticket.globalinterpark.com/Global/Play/Book/BookSeatDetail.asp?GoodsCode={GoodsCode}&PlaceCode={PlaceCode}&LanguageType=G2001&MemBizCode=10965&PlaySeq=001&SeatGrade=&Block=419&TmgsOrNot=D2003&LocOfImage=&Tiki=N&UILock=Y&SessionId={SessionId}&BizCode=10965&GoodsBizCode=29283&GlobalSportsYN=N&SeatCheckCnt=0&InterlockingGoods='
+        resp = requests.get(url, headers=self.headers).text
+        print(resp)
 
     def select_ticket_num(self):
         """
@@ -265,20 +312,21 @@ class Interpark:
 
     def run(self):
         # self.login()
-        self.click_buy_tickets()
-        self.switch_window()
-        while 1:
-            self.select_date()
-            self.pass_captcha()
-            is_seat = self.choose_seat()
-            if is_seat:
-                self.select_ticket_num()
-                self.insert_info()
-                self.choose_agree()
-                self.insert_payment_info()
-                break
-            else:
-                time.sleep(2)
+        # self.click_buy_tickets()
+        # self.switch_window()
+        # while 1:
+        #     self.select_date()
+        #     self.pass_captcha()
+        #     is_seat = self.choose_seat()
+        #     if is_seat:
+        #         self.select_ticket_num()
+        #         self.insert_info()
+        #         self.choose_agree()
+        #         self.insert_payment_info()
+        #         break
+        #     else:
+        #         time.sleep(2)
+        self.get_area()
 
 
 def main():
