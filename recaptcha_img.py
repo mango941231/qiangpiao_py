@@ -1,5 +1,6 @@
 import requests
 import base64
+from PIL import Image
 
 token  = "156543ab-4c71-4b59-a531-372581bd7739"
 
@@ -45,7 +46,18 @@ img_dict_en = {
 }
 
 
-def get_location(encoded_string, img_tag):
+def resize_img():
+    image = Image.open('jietu.png')
+
+    new_width = 300
+    new_height = 300
+
+    resized_image = image.resize((new_width, new_height))
+
+    resized_image.save('jietu.png')
+
+
+def get_location(img_tag):
     headers = {
         'Content-Type': 'application/json',
         'Authorization': f'Bearer {token}',
@@ -59,8 +71,12 @@ def get_location(encoded_string, img_tag):
         img_dict = img_dict_en
     else:
         return []
-    # encoded_string = base64.b64encode(requests.get(imgUrl).content).decode('utf-8')
+    resize_img()
+    with open('jietu.png', 'rb') as f:
+        aaa = f.read()
+    encoded_string = base64.b64encode(aaa).decode('utf-8')
     # print(encoded_string)
+
     json_data = {
         'captchaType': 'ReCaptchaV2Classification',
         'image': encoded_string,
@@ -72,4 +88,4 @@ def get_location(encoded_string, img_tag):
     return response['result']['objects']
 
 
-# get_location("https://www.google.com/recaptcha/enterprise/payload?p=06AFcWeA4MakjIGaj1NB39o60OaULxFyCZ0BMgcjYsvpMhfyItPNUJ5nIXeABN78bUk-7xrM3Tbt4tOIgnif9c8MwsTH_-lgpafOlh8yWXA1R6TEIRcUoNjDkwSw6aYR39KXCLXn_RrNSNo9hMNK7aMpzP-dZFG76hL-N0p0EXIANEJ8NDN5SldGmZ4QyjMoEMUZqtgALDQ-HaTcp7Xrxq7RsihFq1bAgAfA&k=6Lf0kIIpAAAAAEtyIjCB0tpvGmF_UMCE5r3VVvnG", '')
+# get_location("https://www.google.com/recaptcha/enterprise/payload?p=06AFcWeA4MakjIGaj1NB39o60OaULxFyCZ0BMgcjYsvpMhfyItPNUJ5nIXeABN78bUk-7xrM3Tbt4tOIgnif9c8MwsTH_-lgpafOlh8yWXA1R6TEIRcUoNjDkwSw6aYR39KXCLXn_RrNSNo9hMNK7aMpzP-dZFG76hL-N0p0EXIANEJ8NDN5SldGmZ4QyjMoEMUZqtgALDQ-HaTcp7Xrxq7RsihFq1bAgAfA&k=6Lf0kIIpAAAAAEtyIjCB0tpvGmF_UMCE5r3VVvnG", '摩托车')

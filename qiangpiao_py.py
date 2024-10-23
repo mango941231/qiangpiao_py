@@ -152,13 +152,13 @@ class Interpark:
                     yzm_jt = yzm_img.screenshot_as_png
                     with open('jietu.png', 'wb') as fw:
                         fw.write(yzm_jt)
-                    img_encoded_string = base64.b64encode(yzm_jt).decode('utf-8')
-                    print(img_encoded_string)
-                    location = get_location(img_encoded_string, tag_name)
+                    # img_encoded_string = base64.b64encode(yzm_jt).decode('utf-8')
+                    # print(img_encoded_string)
+                    location = get_location(tag_name)
                     for l in location:
                         img[l].click()
                     self.driver.find_element(By.ID, "recaptcha-verify-button").click()
-                time.sleep(5)
+                time.sleep(3)
             except Exception as e:
                 print(traceback.format_exc())
                 return False
