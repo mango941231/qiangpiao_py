@@ -45,7 +45,7 @@ img_dict_en = {
 }
 
 
-def get_location(imgUrl, img_tag):
+def get_location(encoded_string, img_tag):
     headers = {
         'Content-Type': 'application/json',
         'Authorization': f'Bearer {token}',
@@ -59,7 +59,7 @@ def get_location(imgUrl, img_tag):
         img_dict = img_dict_en
     else:
         return []
-    encoded_string = base64.b64encode(requests.get(imgUrl).content).decode('utf-8')
+    # encoded_string = base64.b64encode(requests.get(imgUrl).content).decode('utf-8')
     # print(encoded_string)
     json_data = {
         'captchaType': 'ReCaptchaV2Classification',

@@ -2,6 +2,7 @@ import time
 import configparser
 import traceback
 import xml.etree.ElementTree as ET
+from pyquery import PyQuery as pq
 import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -12,11 +13,15 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
 from recaptcha_img import get_location
 import schedule
+import base64
 
 
 class Interpark:
 
     def __init__(self):
+        self.GoodsCode = None
+        self.PlaceCode = None
+        self.SessionId = None
         options = Options()
         # os.popen(r'start chrome.exe --remote-debugging-port=9527')
         options.add_experimental_option(
@@ -140,13 +145,20 @@ class Interpark:
                         EC.visibility_of_element_located((By.XPATH, "//*[@class='rc-imageselect-desc-wrapper']/div/strong")))
                     tag_name = self.driver.find_element(By.XPATH, "//*[@class='rc-imageselect-desc-wrapper']/div/strong").text
                     img = self.driver.find_elements(By.XPATH, "//*[@class='rc-image-tile-wrapper']")
-                    img_url = img[0].find_element(By.XPATH, ".//img").get_attribute('src')
-                    print(img_url)
-                    location = get_location(img_url, tag_name)
+                    # img_url = img[0].find_element(By.XPATH, ".//img").get_attribute('src')
+                    # print(img_url)
+                    time.sleep(2)
+                    yzm_img = self.driver.find_element(By.ID, 'rc-imageselect-target')
+                    yzm_jt = yzm_img.screenshot_as_png
+                    with open('jietu.png', 'wb') as fw:
+                        fw.write(yzm_jt)
+                    img_encoded_string = base64.b64encode(yzm_jt).decode('utf-8')
+                    print(img_encoded_string)
+                    location = get_location(img_encoded_string, tag_name)
                     for l in location:
                         img[l].click()
                     self.driver.find_element(By.ID, "recaptcha-verify-button").click()
-                time.sleep(2)
+                time.sleep(5)
             except Exception as e:
                 print(traceback.format_exc())
                 return False
@@ -199,6 +211,10 @@ class Interpark:
         :return:
         """
         self.driver.switch_to.default_content()
+        self.SessionId = self.driver.find_element(By.NAME, 'SessionId').get_attribute('value')
+        self.GoodsCode = self.driver.find_element(By.NAME, 'GoodsCode').get_attribute('value')
+        self.PlaceCode = self.driver.find_element(By.NAME, 'PlaceCode').get_attribute('value')
+        print(f'GoodsCode:{self.GoodsCode}\nPlaceCode:{self.PlaceCode}\nSessionId:{self.SessionId}')
         self.driver.switch_to.frame('ifrmSeat')
         self.driver.switch_to.frame('ifrmSeatDetail')
         # 判断是否要选区域
@@ -206,7 +222,7 @@ class Interpark:
             # 不选区域情况
             vs = self.get_vacant_seat()
         else:
-            vs = self.select_area()
+            vs = self.select_area_api()
         if len(vs) > 0:
             vs[0].click()
             self.driver.switch_to.default_content()
@@ -220,33 +236,48 @@ class Interpark:
             self.click_buy_tickets()
             return False
 
-    def choose_seat_api(self):
+    def select_area_api(self):
         """
         选座（通过接口）
         :return:
         """
-        pass
-
-    def get_area(self):
-        GoodsCode = '24011097'
-        PlaceCode = '24000609'
-        SessionId = '24011097_M0000000641721729592025'
-        url = f'https://gpoticket.globalinterpark.com/Global/Play/Book/Lib/BookInfoXml.asp?Flag=AllBlock&GoodsCode={GoodsCode}&PlaceCode={PlaceCode}&LanguageType=G2001&MemBizCode=10965&PlaySeq=001&Tiki=N&TmgsOrNot=D2003&SessionId={SessionId}'
+        vs = []
+        # print(self.driver.window_handles)
+        # self.driver.switch_to.window(self.driver.window_handles[0])
+        # self.driver.switch_to.frame('ifrmSeat')
+        # self.driver.switch_to.frame('ifrmSeatDetail')
+        # self.GoodsCode = '24013283'
+        # self.PlaceCode = '24001154'
+        # self.SessionId = '24013283_M0000001524111729665635'
+        url = f'https://gpoticket.globalinterpark.com/Global/Play/Book/Lib/BookInfoXml.asp?Flag=AllBlock&GoodsCode={self.GoodsCode}&PlaceCode={self.PlaceCode}&LanguageType=G2001&MemBizCode=10965&PlaySeq=001&Tiki=N&TmgsOrNot=D2003&SessionId={self.SessionId}'
         resp = requests.get(url, headers=self.headers).text
         # print(resp)
         html = ET.fromstring(resp)
         for i in html.findall('Table'):
             area_no = i.find('SelfDefineBlock').text
             SeatGrade = i.find('SeatGrade').text
-            print(area_no, SeatGrade)
+            kz_num = self.get_seat_detail(area_no)
+            print(f"区域：{area_no} 空座数：{kz_num}")
+            if kz_num > 0:
+                vs.append(self.driver.find_element(By.XPATH,
+                                                   f"//*[@id='TmgsTable']//map/area[contains(@onmouseout, '{area_no}')]"))
+                return vs
+        return vs
 
-    def get_seat_detail(self):
-        GoodsCode = '24012940'
-        PlaceCode = '24001113'
-        SessionId = '24011097_M0000000641721729592025'
-        url = f'https://gpoticket.globalinterpark.com/Global/Play/Book/BookSeatDetail.asp?GoodsCode={GoodsCode}&PlaceCode={PlaceCode}&LanguageType=G2001&MemBizCode=10965&PlaySeq=001&SeatGrade=&Block=419&TmgsOrNot=D2003&LocOfImage=&Tiki=N&UILock=Y&SessionId={SessionId}&BizCode=10965&GoodsBizCode=29283&GlobalSportsYN=N&SeatCheckCnt=0&InterlockingGoods='
-        resp = requests.get(url, headers=self.headers).text
-        print(resp)
+    def get_seat_detail(self, Block):
+        try:
+            # GoodsCode = '24013283'
+            # PlaceCode = '24001154'
+            # SessionId = '24011097_M0000000646441729663706'
+            PlaySeq = '001'
+            # Block = '003'
+            url = f'https://gpoticket.globalinterpark.com/Global/Play/Book/BookSeatDetail.asp?GoodsCode={self.GoodsCode}&PlaceCode={self.PlaceCode}&LanguageType=G2001&MemBizCode=10965&PlaySeq={PlaySeq}&SeatGrade=&Block={Block}&TmgsOrNot=D2003&LocOfImage=&Tiki=N&UILock=Y&SessionId={self.SessionId}&BizCode=10965&GoodsBizCode=29283&GlobalSportsYN=N&SeatCheckCnt=0&InterlockingGoods='
+            resp = requests.get(url, headers=self.headers, timeout=5).text
+            html = pq(resp)
+            kz_num = html('#Seats').length
+            return kz_num
+        except Exception as e:
+            print(e)
 
     def select_ticket_num(self):
         """
@@ -312,21 +343,24 @@ class Interpark:
 
     def run(self):
         # self.login()
-        # self.click_buy_tickets()
-        # self.switch_window()
-        # while 1:
-        #     self.select_date()
-        #     self.pass_captcha()
-        #     is_seat = self.choose_seat()
-        #     if is_seat:
-        #         self.select_ticket_num()
-        #         self.insert_info()
-        #         self.choose_agree()
-        #         self.insert_payment_info()
-        #         break
-        #     else:
-        #         time.sleep(2)
-        self.get_area()
+        self.click_buy_tickets()
+        self.switch_window()
+        while 1:
+            self.select_date()
+            self.pass_captcha()
+            is_seat = self.choose_seat()
+            break
+            # if is_seat:
+            #     self.select_ticket_num()
+            #     self.insert_info()
+            #     self.choose_agree()
+            #     self.insert_payment_info()
+            #     break
+            # else:
+            #     time.sleep(2)
+
+        # self.select_area_api()
+        # self.get_seat_detail('417')
 
 
 def main():
