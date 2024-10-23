@@ -242,26 +242,33 @@ class Interpark:
         :return:
         """
         vs = []
-        # print(self.driver.window_handles)
-        # self.driver.switch_to.window(self.driver.window_handles[0])
-        # self.driver.switch_to.frame('ifrmSeat')
-        # self.driver.switch_to.frame('ifrmSeatDetail')
-        # self.GoodsCode = '24013283'
-        # self.PlaceCode = '24001154'
-        # self.SessionId = '24013283_M0000001524111729665635'
-        url = f'https://gpoticket.globalinterpark.com/Global/Play/Book/Lib/BookInfoXml.asp?Flag=AllBlock&GoodsCode={self.GoodsCode}&PlaceCode={self.PlaceCode}&LanguageType=G2001&MemBizCode=10965&PlaySeq=001&Tiki=N&TmgsOrNot=D2003&SessionId={self.SessionId}'
-        resp = requests.get(url, headers=self.headers).text
-        # print(resp)
-        html = ET.fromstring(resp)
-        for i in html.findall('Table'):
-            area_no = i.find('SelfDefineBlock').text
-            SeatGrade = i.find('SeatGrade').text
-            kz_num = self.get_seat_detail(area_no)
-            print(f"区域：{area_no} 空座数：{kz_num}")
-            if kz_num > 0:
-                vs.append(self.driver.find_element(By.XPATH,
-                                                   f"//*[@id='TmgsTable']//map/area[contains(@onmouseout, '{area_no}')]"))
-                return vs
+        try:
+            # print(self.driver.window_handles)
+            # self.driver.switch_to.window(self.driver.window_handles[0])
+            # self.driver.switch_to.frame('ifrmSeat')
+            # self.driver.switch_to.frame('ifrmSeatDetail')
+            # self.GoodsCode = '24013283'
+            # self.PlaceCode = '24001154'
+            # self.SessionId = '24013283_M0000001524111729665635'
+            url = f'https://gpoticket.globalinterpark.com/Global/Play/Book/Lib/BookInfoXml.asp?Flag=AllBlock&GoodsCode={self.GoodsCode}&PlaceCode={self.PlaceCode}&LanguageType=G2001&MemBizCode=10965&PlaySeq=001&Tiki=N&TmgsOrNot=D2003&SessionId={self.SessionId}'
+            resp = requests.get(url, headers=self.headers).text
+            # print(resp)
+            html = ET.fromstring(resp)
+            for i in html.findall('Table'):
+                area_no = i.find('SelfDefineBlock').text
+                SeatGrade = i.find('SeatGrade').text
+                kz_num = self.get_seat_detail(area_no)
+                print(f"区域：{area_no} 空座数：{kz_num}")
+                if kz_num == None:
+                    break
+                if kz_num > 0:
+                    self.driver.find_element(By.XPATH,
+                                                       f"//*[@id='TmgsTable']//map/area[contains(@onmouseout, '{area_no}')]").click()
+                    time.sleep(2)
+                    vs = self.get_vacant_seat()
+                    return vs
+        except Exception as e:
+            print(traceback.format_exc())
         return vs
 
     def get_seat_detail(self, Block):
@@ -278,6 +285,7 @@ class Interpark:
             return kz_num
         except Exception as e:
             print(e)
+            return None
 
     def select_ticket_num(self):
         """
@@ -349,18 +357,14 @@ class Interpark:
             self.select_date()
             self.pass_captcha()
             is_seat = self.choose_seat()
-            break
-            # if is_seat:
-            #     self.select_ticket_num()
-            #     self.insert_info()
-            #     self.choose_agree()
-            #     self.insert_payment_info()
-            #     break
-            # else:
-            #     time.sleep(2)
-
-        # self.select_area_api()
-        # self.get_seat_detail('417')
+            if is_seat:
+                self.select_ticket_num()
+                self.insert_info()
+                self.choose_agree()
+                self.insert_payment_info()
+                break
+            else:
+                time.sleep(2)
 
 
 def main():
